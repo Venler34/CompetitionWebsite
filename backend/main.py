@@ -104,7 +104,7 @@ def editScore(score, user_id):
         .table("Users")
         .update(update_score)
         .eq("id", user_id)
-        .gt("score", score)   # only update if new score is higher
+        .lt("score", score)   # only update if new score is higher
         .execute()
     )
     return len(response.data) > 0  # True if DB was updated

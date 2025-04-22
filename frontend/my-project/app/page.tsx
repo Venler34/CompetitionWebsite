@@ -21,11 +21,13 @@ export default function Home() {
       const data = await response.json();
       setUsers(data['Placements']);
     }
-    
+    getPlacements() 
     setInterval(getPlacements, 1000 * 10) // every 10 seconds for testing
   }, [])
 
   const columns = ["Rank", "Username", "Score"];
+  
+  const styleOne = "bg-color-"
 
   return (
     <div className="p-8">
