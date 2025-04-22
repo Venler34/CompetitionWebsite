@@ -37,18 +37,18 @@ export default function Home() {
 
   const determineStyle = (index: number) => {
     if(index == 0) {
-      return defaultStyle + firstPlace
+      return defaultStyle + firstPlace;
     }
     else if(index == 1) {
-      return defaultStyle + secondPlace
+      return defaultStyle + secondPlace;
     }
     else if(index == 2) {
-      return defaultStyle + thirdPlace
+      return defaultStyle + thirdPlace;
     }
     else if(index % 2 == 0) {
-      return defaultStyle + styleOne
+      return defaultStyle + styleOne;
     } else {
-      return defaultStyle + styleTwo
+      return defaultStyle + styleTwo;
     }
   }
 
