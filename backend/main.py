@@ -67,7 +67,7 @@ def computeError(answers: pd.DataFrame, predictions: pd.DataFrame):
 # Updates score if the score is greater than previous score
 def editScore(score, user_id):
     update_score = {"score": score}
-    response = supabase.table("Users").update(update_score).eq("id", user_id).lt("score", score).execute()
+    response = supabase.table("Users").update(update_score).eq("id", user_id).gt("score", score).execute() # EDIT THIS IF SCORE NEEDS TO BE DECREASED
 
     return len(response.data) > 0 # return true if data was updated otherwise score wasn't high enough
     
@@ -111,14 +111,15 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     isValid, errMsg = isValidDataframe(predictions, answers)
     if(not isValid):
         return {"error", errMsg}
-
+    
     # Remove date column since unnecessary
-    answers.drop("date")
-    predictions.drop("date")
+    answers.drop(columns=["date"], inplace=True)
+    predictions.drop(columns=["date"], inplace=True)
 
-    error = computeError(answers, predictions)
+    error = round(computeError(answers, predictions), 4) # round to 4 decimal places
 
-    editScore(error, db_user['id']) 
+    if(not editScore(error, db_user['id'])):
+        return {"message": f"Score was not improved but successfully submitted with RMSE error {error}"}
 
     return {
         "message" : f"Successfully Submitted with RMSE error {error}"
