@@ -1,0 +1,48 @@
+"use client"
+
+import {useEffect, useState} from "react";
+
+interface User {
+  score: number,
+  name: string
+}
+
+export default function Home() {
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function getPlacements() {
+      const response = await fetch("http://127.0.0.1:8000/placements");
+      const data = await response.json();
+      setUsers(data['Placements']);
+    }
+    
+    setInterval(getPlacements, 1000 * 10) // every 10 seconds for testing
+  }, [])
+
+  const columns = ["Rank", "Username", "Score"];
+
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl">Leaderboard</h1>
+      <div className="grid grid-cols-3 py-4">
+        {
+          columns.map((column, index) => (
+            <div className="text-xl" key={index}>
+              {column}
+            </div>
+          ))
+        }
+        {
+          users.map((user, index) => (
+            <>
+              <h1>{index+1}</h1>
+              <h1>{user.name}</h1>
+              <h1>{user.score}</h1>
+            </>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
