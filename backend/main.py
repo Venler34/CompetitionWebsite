@@ -73,8 +73,10 @@ def editScore(score, user_id):
     
 def isValidDataframe(predictions, answers):
     rows, cols = predictions.shape
-    answersRows, answersRows = answers.shape
-    if(rows != answersRows and cols != answersRows): # 30 rows and 7 columns
+    answerRows, answerCols = answers.shape
+    print(rows, cols)
+    print(answerRows, answerCols)
+    if(rows != answerRows or cols != answerCols): # 30 rows and 7 columns
         return False, "Number of rows and cols is not correct"
 
     for (predCol, answerCol) in zip(predictions.columns.tolist(), answers.columns.tolist()):
