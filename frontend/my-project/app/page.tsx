@@ -12,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     async function getPlacements() {
-      const response = await fetch("https://adsc-competition-website.onrender.com/placemenets");
+      const response = await fetch("https://adsc-competition-website.onrender.com/placements");
       const data = await response.json();
       setUsers(data['Placements']);
     }
