@@ -12,7 +12,12 @@ export default function Home() {
 
   useEffect(() => {
     async function getPlacements() {
-      const response = await fetch("https://adsc-competition-website.onrender.com/placements");
+      const response = await fetch("https://adsc-competition-website.onrender.com/placements", {
+        method: "GET",
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
+      });
       const data = await response.json();
       setUsers(data['Placements']);
     }
