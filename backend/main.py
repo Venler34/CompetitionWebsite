@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import pandas as pd
 from io import StringIO
 import json
+import numpy as np
 
 app = FastAPI()
 
@@ -55,9 +56,13 @@ def authenticate_user(user: UserAuth):
 ##################
 # Score Handling #
 ##################
-def computeAccuracy(answers: pd.DataFrame, predictions: pd.DataFrame):
-    # Whatever metric used can determine the score
-    return 20
+def computeError(answers: pd.DataFrame, predictions: pd.DataFrame):
+    # RMSE
+    resultDF = np.square(answers.subtract(predictions))
+    total_sum = resultDF.values.sum()
+    total_sum /= resultDF.size
+    return np.sqrt(total_sum)
+
 
 # Updates score if the score is greater than previous score
 def editScore(score, user_id):
@@ -66,6 +71,17 @@ def editScore(score, user_id):
 
     return len(response.data) > 0 # return true if data was updated otherwise score wasn't high enough
     
+def isValidDataframe(predictions, answers):
+    rows, cols = predictions.shape
+    answersRows, answersRows = answers.shape
+    if(rows != answersRows and cols != answersRows): # 30 rows and 7 columns
+        return False, "Number of rows and cols is not correct"
+
+    for (predCol, answerCol) in zip(predictions.columns.tolist(), answers.columns.tolist()):
+        if predCol != answerCol:
+            return False, f"{predCol} is not a valid column name or the csv is formatted incorrectly"
+    
+    return True, "No Error"
 
 @app.post("/verifyAnswers")
 async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
@@ -89,12 +105,21 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     response = supabase.table("StockChallenge").select("*").execute()
     answers = pd.DataFrame(response.data)
 
-    accuracy = computeAccuracy(answers, predictions)
+    # Check to make sure csv is valid
+    isValid, errMsg = isValidDataframe(predictions, answers)
+    if(not isValid):
+        return {"error", errMsg}
 
-    editScore(accuracy, db_user['id']) 
+    # Remove date column since unnecessary
+    answers.drop("date")
+    predictions.drop("date")
+
+    error = computeError(answers, predictions)
+
+    editScore(error, db_user['id']) 
 
     return {
-        "message" : f"Successfully Submitted with accuracy {accuracy}%"
+        "message" : f"Successfully Submitted with RMSE error {error}"
     }
 
 @app.get("/placements")
@@ -102,7 +127,7 @@ def getPlacemenets():
     response = supabase.table("Users").select("*").execute()
     results = response.data
 
-    results = sorted(results, key= lambda x: x['score'], reverse=True) # Higher score comes first
+    results = sorted(results, key= lambda x: x['score'], reverse=False) # Lower score comes first because RMSE
     for result in results:
         result.pop('password', None) # Don't leak database info
         result.pop('id', None)
