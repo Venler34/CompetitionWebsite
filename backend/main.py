@@ -56,12 +56,46 @@ def authenticate_user(user: UserAuth):
 ##################
 # Score Handling #
 ##################
-def computeError(answers: pd.DataFrame, predictions: pd.DataFrame):
-    # RMSE
-    resultDF = np.square(answers.subtract(predictions))
-    total_sum = resultDF.values.sum()
-    total_sum /= resultDF.size
-    return np.sqrt(total_sum)
+import numpy as np
+import pandas as pd
+from typing import Dict, Tuple
+
+def computeError(
+    answers: pd.DataFrame,
+    predictions: pd.DataFrame
+) -> Tuple[Dict[str, float], float]:
+    """
+    For each column in `predictions`:
+      rmse     = sqrt(mean((answers[col] - predictions[col])**2))
+      cv_rmse  = rmse / mean(answers[col])
+      score    = 100 * (1/2) ** cv_rmse
+
+    Returns:
+      column_scores: { col_name: score }
+      total_score:     sum of column_scores (max = n_cols * 100)
+    """
+    column_scores: Dict[str, float] = {}
+    for col in predictions.columns:
+        # 1) RMSE
+        mse  = ((answers[col] - predictions[col]) ** 2).mean()
+        rmse = np.sqrt(mse)
+
+        # 2) normalize by mean
+        meanv = answers[col].mean()
+        if meanv != 0:
+            x = rmse / meanv
+        else:
+            # if true values are flat zero, perfect => x=0, else infinite
+            x = 0.0 if rmse == 0 else np.inf
+
+        # 3) exponential decay score
+        score_col = 100.0 * (0.5 ** x)
+
+        column_scores[col] = round(score_col, 4)
+
+    total_score = round(sum(column_scores.values()), 4)
+    return column_scores, total_score
+
 
 def editScore(score, user_id):
     update_score = {"score": score}
@@ -70,10 +104,11 @@ def editScore(score, user_id):
         .table("Users")
         .update(update_score)
         .eq("id", user_id)
-        .gt("score", score)
+        .gt("score", score)   # only update if new score is higher
         .execute()
-    )  # EDIT THIS IF SCORE NEEDS TO BE DECREASED
-    return len(response.data) > 0 # return true if data was updated otherwise score wasn't high enough
+    )
+    return len(response.data) > 0  # True if DB was updated
+
 
 @app.post("/verifyAnswers")
 async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
@@ -86,14 +121,14 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     # 2) Load CSV
     if not file.filename.endswith('.csv'):
         return {"error": "The uploaded file must be a CSV"}
-    contents = await file.read()
+    contents    = await file.read()
     predictions = pd.read_csv(StringIO(contents.decode('utf-8')))
 
     # 3) Load answer key
-    resp = supabase.table("StockChallenge").select("*").execute()
+    resp    = supabase.table("StockChallenge").select("*").execute()
     answers = pd.DataFrame(resp.data)
 
-    # 4) Drop date column from both
+    # 4) Drop date column from both (if present)
     predictions = predictions.drop(columns=["date"], errors="ignore")
     answers     = answers.drop(columns=["date"],     errors="ignore")
 
@@ -101,7 +136,7 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     if len(predictions) != len(answers):
         return {"error": f"Your file must have exactly {len(answers)} rows"}
 
-    # 6) Identify valid tickers and drop the rest
+    # 6) Filter to valid tickers only
     valid_tickers      = set(answers.columns)
     user_tickers       = set(predictions.columns)
     valid_user_tickers = list(user_tickers & valid_tickers)
@@ -109,29 +144,36 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     if not valid_user_tickers:
         return {"error": "No valid tickers found in your upload"}
 
-    # keep only valid cols
     predictions = predictions[valid_user_tickers]
     answers_sub = answers[valid_user_tickers]
 
-    # 7) Compute error (RMSE over just the valid tickers)
-    error = round(computeError(answers_sub, predictions), 4)
+    # 7) Compute per-column scores and total score
+    col_scores, total_score = computeError(answers_sub, predictions)
 
-    # 8) Update score if improved
-    if not editScore(error, db_user["id"]):
-        return {"message": f"Score not improved; your RMSE was {error}"}
+    # 8) Update user score if improved
+    updated = editScore(total_score, db_user["id"])
 
-    return {"message": f"Score updated! Your RMSE is {error}"}
+    return {
+        "message": (
+            f"{'Score updated!' if updated else 'Score not improved; '} "
+            f"Total: {total_score} / {len(answers.columns)*100}"
+        ),
+        "perColumnScores": col_scores
+    }
 
 
 @app.get("/placements")
 def getPlacemenets():
     response = supabase.table("Users").select("*").execute()
-    results = response.data
+    results  = response.data
 
-    results = sorted(results, key= lambda x: x['score'], reverse=False) # Lower score comes first because RMSE
-    for result in results:
-        result.pop('password', None) # Don't leak database info
-        result.pop('id', None)
-        result.pop('created_at', None)
+    # Sort descending: highest score first
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    return {"Placements" : results}
+    for r in results:
+        # Remove sensitive fields
+        r.pop("password",  None)
+        r.pop("id",        None)
+        r.pop("created_at", None)
+
+    return {"Placements": results}
