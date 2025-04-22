@@ -5,7 +5,7 @@ import {useEffect, useState} from "react";
 interface User {
   score: number,
   name: string
-}
+} // Testing 
 
 export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
