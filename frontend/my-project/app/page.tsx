@@ -12,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     async function getPlacements() {
-      const response = await fetch("http://127.0.0.1:8000/placements");
+      const response = await fetch("https://adsc-competition-website.onrender.com/placemenets");
       const data = await response.json();
       setUsers(data['Placements']);
     }
