@@ -63,67 +63,65 @@ def computeError(answers: pd.DataFrame, predictions: pd.DataFrame):
     total_sum /= resultDF.size
     return np.sqrt(total_sum)
 
-
-# Updates score if the score is greater than previous score
 def editScore(score, user_id):
     update_score = {"score": score}
-    response = supabase.table("Users").update(update_score).eq("id", user_id).gt("score", score).execute() # EDIT THIS IF SCORE NEEDS TO BE DECREASED
-
+    response = (
+        supabase
+        .table("Users")
+        .update(update_score)
+        .eq("id", user_id)
+        .gt("score", score)
+        .execute()
+    )  # EDIT THIS IF SCORE NEEDS TO BE DECREASED
     return len(response.data) > 0 # return true if data was updated otherwise score wasn't high enough
-    
-def isValidDataframe(predictions, answers):
-    rows, cols = predictions.shape
-    answerRows, answerCols = answers.shape
-    print(rows, cols)
-    print(answerRows, answerCols)
-    if(rows != answerRows or cols != answerCols): # 30 rows and 7 columns
-        return False, "Number of rows and cols is not correct"
-
-    for (predCol, answerCol) in zip(predictions.columns.tolist(), answers.columns.tolist()):
-        if predCol != answerCol:
-            return False, f"{predCol} is not a valid column name or the csv is formatted incorrectly"
-    
-    return True, "No Error"
 
 @app.post("/verifyAnswers")
 async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
-    print(data)
+    # 1) Authenticate
     user = UserAuth(**json.loads(data))
-    print(user.name, user.password)
     db_user, valid_user = authenticate_user(user)
-    if(not valid_user):
+    if not valid_user:
         return {"error": "Invalid user credentials"}
-    
-    print("Found User")
 
+    # 2) Load CSV
     if not file.filename.endswith('.csv'):
         return {"error": "The uploaded file must be a CSV"}
-    
-    print("CSV Found")
-
     contents = await file.read()
     predictions = pd.read_csv(StringIO(contents.decode('utf-8')))
 
-    response = supabase.table("StockChallenge").select("*").execute()
-    answers = pd.DataFrame(response.data)
+    # 3) Load answer key
+    resp = supabase.table("StockChallenge").select("*").execute()
+    answers = pd.DataFrame(resp.data)
 
-    # Check to make sure csv is valid
-    isValid, errMsg = isValidDataframe(predictions, answers)
-    if(not isValid):
-        return {"error", errMsg}
-    
-    # Remove date column since unnecessary
-    answers.drop(columns=["date"], inplace=True)
-    predictions.drop(columns=["date"], inplace=True)
+    # 4) Drop date column from both
+    predictions = predictions.drop(columns=["date"], errors="ignore")
+    answers     = answers.drop(columns=["date"],     errors="ignore")
 
-    error = round(computeError(answers, predictions), 4) # round to 4 decimal places
+    # 5) Enforce 30 rows
+    if len(predictions) != len(answers):
+        return {"error": f"Your file must have exactly {len(answers)} rows"}
 
-    if(not editScore(error, db_user['id'])):
-        return {"message": f"Score was not improved but successfully submitted with RMSE error {error}"}
+    # 6) Identify valid tickers and drop the rest
+    valid_tickers      = set(answers.columns)
+    user_tickers       = set(predictions.columns)
+    valid_user_tickers = list(user_tickers & valid_tickers)
 
-    return {
-        "message" : f"Successfully Submitted with RMSE error {error}"
-    }
+    if not valid_user_tickers:
+        return {"error": "No valid tickers found in your upload"}
+
+    # keep only valid cols
+    predictions = predictions[valid_user_tickers]
+    answers_sub = answers[valid_user_tickers]
+
+    # 7) Compute error (RMSE over just the valid tickers)
+    error = round(computeError(answers_sub, predictions), 4)
+
+    # 8) Update score if improved
+    if not editScore(error, db_user["id"]):
+        return {"message": f"Score not improved; your RMSE was {error}"}
+
+    return {"message": f"Score updated! Your RMSE is {error}"}
+
 
 @app.get("/placements")
 def getPlacemenets():
