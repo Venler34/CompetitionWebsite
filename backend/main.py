@@ -89,7 +89,7 @@ def computeError(
             x = 0.0 if rmse == 0 else np.inf
 
         # 3) exponential decay score
-        score_col = 100.0 * (1/10) ** (3.0 * x)
+        score_col = 100.0 * (1/10) ** (100.0 * x)
 
         column_scores[col] = round(score_col, 4)
 
