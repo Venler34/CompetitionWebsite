@@ -1,8 +1,9 @@
 "use client"
 import {useEffect, useState} from "react"
 
+// Event Target is parent of SpeechRecognition
 export default function Page() {
-    const [speechReg, setSpeechReg] = useState<any | null>(null);
+    const [speechReg, setSpeechReg] = useState<Window["SpeechRecognition"] | null>(null);
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -12,7 +13,7 @@ export default function Page() {
                 recognition.lang = "en-US";
                 recognition.interimResults = false;
 
-                recognition.onresult = (event: any) => {
+                recognition.onresult = (event: Window["SpeechRecognitionEvent"]) => {
                     console.info(event.results);
                     const result = event.results[event.resultIndex];
                     if (result.isFinal) {
@@ -46,5 +47,6 @@ declare global { // Remove Typescript errors
     interface Window {
       webkitSpeechRecognition: any;
       SpeechRecognition: any;
+      SpeechRecognitionEvent: any;
     }
 }
