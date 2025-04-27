@@ -39,7 +39,21 @@ export default function Page() {
   return (
     <div>
         Hello World!
-        <input type="checkbox" id="mic-toggle" className="sr-only" onChange={event => handleMicToggle(event)} />
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" id="mic-toggle" className="sr-only peer" onChange={event => handleMicToggle(event)} />
+        <div className="h-5 w-5 rounded border-2 border-gray-400 peer-checked:border-green-500 peer-checked:bg-green-500 relative transition">
+            <svg
+            className="absolute hidden peer-checked:block left-1 top-0.5 w-3 h-3 text-white"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            >
+            <path d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+        <span className="text-sm text-gray-700">I agree to the terms</span>
+        </label>
     </div>
   );
 }
