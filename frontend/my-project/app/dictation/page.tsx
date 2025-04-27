@@ -1,9 +1,8 @@
 "use client"
 import {useEffect, useState} from "react"
-type SpeechRecognitionType = any; // TODO: Replace with proper type
 
 export default function Page() {
-    const [speechReg, setSpeechReg] = useState<SpeechRecognitionType | null>(null);
+    const [speechReg, setSpeechReg] = useState<any | null>(null);
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
