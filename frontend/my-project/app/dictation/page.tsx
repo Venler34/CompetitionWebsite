@@ -11,9 +11,10 @@ export default function Page() {
                 const recognition = new SpeechRecognition();
                 recognition.continuous = true;
                 recognition.lang = "en-US";
-                recognition.interimResults = false;
+                recognition.interimResults = true;
 
                 recognition.onresult = (event: Window["SpeechRecognitionEvent"]) => {
+                    console.log("recognition results hit");
                     console.info(event.results);
                     const result = event.results[event.resultIndex];
                     if (result.isFinal) {
