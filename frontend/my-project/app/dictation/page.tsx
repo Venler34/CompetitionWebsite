@@ -26,11 +26,15 @@ export default function Page() {
         }
     }, []);
   function handleMicToggle(event: React.ChangeEvent<HTMLInputElement>) {
+    console.log("Handle Mic Toggle Hit")
     if (!speechReg) return;
+    console.log("Speech Recognition Activated")
     
     if (event.target.checked) {
+        console.log("Speech Recognition On");
       speechReg.start();
     } else {
+        console.log("Speech Recognition Off");
       speechReg.stop();
     }
   }
