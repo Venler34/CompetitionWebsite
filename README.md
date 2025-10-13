@@ -4,7 +4,7 @@
     <img src="images/LeaderboardWebsite.png" alt="Logo" width="700" />
 </p>
 
-This was used for 04/22/2025 <a href="https://website-app-463097328737.us-south1.run.app">Aggie Data Science</a> Workshop over Time Series Data. Students were given time series data and had to use some time series forecasting machine learning models (LSTM, Winter's Method, ARIMA, SARIMA, etc.). 
+This was used for 04/22/2025 <a target="_blank" href="https://website-app-463097328737.us-south1.run.app">Aggie Data Science</a> Workshop over Time Series Data. Students were given time series data and had to use some time series forecasting machine learning models (LSTM, Winter's Method, ARIMA, SARIMA, etc.). 
 
 The tech stack is FastAPI and Python for the backend, PostgreSQL and Supabase for the database, and NextJS and React for the frontend.
 Users will submit their model predictions to the leaderboard website API, the API will compare the results to the true labels, and the results will be displayed on the leaderboard.
