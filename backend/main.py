@@ -19,7 +19,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -169,6 +169,8 @@ def getPlacemenets():
 
     # Sort descending: highest score first
     results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    print("Results", results)
 
     for r in results:
         # Remove sensitive fields
