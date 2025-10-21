@@ -5,13 +5,13 @@ import {useEffect, useState} from "react";
 interface User {
   score: number,
   name: string
-} // Testing 
+} 
 
 export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    async function getPlacements() {
+    async function getPlacements() { // https://adsc-competition-website.onrender.com/placements
       const response = await fetch("https://adsc-competition-website.onrender.com/placements", {
         method: "GET",
         headers: {
