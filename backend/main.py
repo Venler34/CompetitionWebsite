@@ -90,6 +90,7 @@ def computeError(
 
         # 3) exponential decay score
         # score_col = 100.0 * (1/10) ** (100.0 * x)
+        print(rmse)
         score_col = 1 / rmse
 
         column_scores[col] = round(score_col, 4)
