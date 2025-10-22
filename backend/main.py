@@ -79,7 +79,7 @@ def computeError(
         # 1) RMSE
         # mse  = ((answers[col] - predictions[col]) ** 2).mean()
         # rmse = np.sqrt(mse)
-        error = (answers[col] - predictions[col]).sum()
+        error = (answers[col] - predictions[col]).abs().sum()
 
         # 2) normalize by mean
         # meanv = answers[col].mean()
