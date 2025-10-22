@@ -81,15 +81,16 @@ def computeError(
         rmse = np.sqrt(mse)
 
         # 2) normalize by mean
-        meanv = answers[col].mean()
-        if meanv != 0:
-            x = rmse / meanv
-        else:
-            # if true values are flat zero, perfect => x=0, else infinite
-            x = 0.0 if rmse == 0 else np.inf
+        # meanv = answers[col].mean()
+        # if meanv != 0:
+        #     x = rmse / meanv
+        # else:
+        #     # if true values are flat zero, perfect => x=0, else infinite
+        #     x = 0.0 if rmse == 0 else np.inf
 
         # 3) exponential decay score
-        score_col = 100.0 * (1/10) ** (100.0 * x)
+        # score_col = 100.0 * (1/10) ** (100.0 * x)
+        score_col = 1 / rmse
 
         column_scores[col] = round(score_col, 4)
 
