@@ -39,7 +39,8 @@ def create_user(user: UserAuth):
     try:
         response = supabase.table("Users").insert({
             "name": user.name,
-            "password": user.password
+            "password": user.password,
+            "score": 2147483647
         }).execute()
         return {"message": "User added successfully", "data": response.data}
     except Exception as e:
