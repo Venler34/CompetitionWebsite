@@ -106,7 +106,7 @@ def editScore(score, user_id):
         .table("Users")
         .update(update_score)
         .eq("id", user_id)
-        .gt("score", score)   # only update if new score is higher
+        .gt("score", score)   # only update if new score is smaller
         .execute()
     )
     return len(response.data) > 0  # True if DB was updated
@@ -158,7 +158,7 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     return {
         "message": (
             f"{'Score updated!' if updated else 'Score not improved; '} "
-            f"Total: {total_score}"
+            f"Total Error: {total_score}"
         ),
         "perColumnScores": col_scores
     }
