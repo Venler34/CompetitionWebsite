@@ -156,7 +156,7 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     return {
         "message": (
             f"{'Score updated!' if updated else 'Score not improved; '} "
-            f"Total: {total_score} / {len(answers.columns)*100}"
+            f"Total: {total_score} / {100}"
         ),
         "perColumnScores": col_scores
     }
