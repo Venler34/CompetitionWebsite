@@ -77,8 +77,9 @@ def computeError(
     column_scores: Dict[str, float] = {}
     for col in predictions.columns:
         # 1) RMSE
-        mse  = ((answers[col] - predictions[col]) ** 2).mean()
-        rmse = np.sqrt(mse)
+        # mse  = ((answers[col] - predictions[col]) ** 2).mean()
+        # rmse = np.sqrt(mse)
+        error = (answers[col] - predictions[col]).sum()
 
         # 2) normalize by mean
         # meanv = answers[col].mean()
@@ -90,7 +91,7 @@ def computeError(
 
         # 3) exponential decay score
         # score_col = 100.0 * (1/10) ** (100.0 * x)
-        score_col = rmse
+        score_col = error
 
         column_scores[col] = round(score_col, 4)
 
