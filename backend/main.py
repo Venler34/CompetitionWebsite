@@ -90,8 +90,7 @@ def computeError(
 
         # 3) exponential decay score
         # score_col = 100.0 * (1/10) ** (100.0 * x)
-        print(rmse)
-        score_col = 1 / rmse
+        score_col = rmse
 
         column_scores[col] = round(score_col, 4)
 
@@ -158,7 +157,7 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     return {
         "message": (
             f"{'Score updated!' if updated else 'Score not improved; '} "
-            f"Total: {total_score} / {100}"
+            f"Total: {total_score}"
         ),
         "perColumnScores": col_scores
     }
@@ -170,7 +169,7 @@ def getPlacemenets():
     results  = response.data
 
     # Sort descending: highest score first
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
+    results = sorted(results, key=lambda x: x["score"], reverse=False)
 
     print("Results", results)
 
