@@ -6,7 +6,7 @@ class ElapsedTimeStrategy():
     # Score is represented as elapsed time
     @staticmethod
     def editScore(score, user_id, supabase):
-        update_score = {"elapsed_seconds": score}
+        update_score = {"score": score}
         response = (
             supabase
             .table("Users")
