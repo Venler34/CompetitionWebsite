@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from .service import verifyAnswersForElapsedSeconds
+from service import verifyAnswersForElapsedSeconds
 from supabase_client import supabase
 from pydantic import BaseModel
 import pandas as pd

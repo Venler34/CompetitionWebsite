@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Tuple
 
-from .errors import *
+from errors import *
 
 def verifyAnswersForElapsedSeconds(predictions, supabase, db_user):
     # 8) Update user score if improved
