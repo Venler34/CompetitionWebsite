@@ -82,8 +82,8 @@ def getPlacemenets():
     response = supabase.table("Users").select("*").execute()
     results  = response.data
 
-    # Sort descending: highest score first
-    results = sorted(results, key=lambda x: x["score"], reverse=False)
+    # Sort ascending so lowest elapsed seconds first
+    results = sorted(results, key=lambda x: x["score"])
 
     print("Results", results)
 
