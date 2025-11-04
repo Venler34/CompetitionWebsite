@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from backend.errors import ElapsedTimeStrategy
+from backend.service import verifyAnswersForElapsedSeconds
 from supabase_client import supabase
 from pydantic import BaseModel
 import pandas as pd
@@ -57,61 +59,6 @@ def authenticate_user(user: UserAuth):
 ##################
 # Score Handling #
 ##################
-import numpy as np
-import pandas as pd
-from typing import Dict, Tuple
-
-def computeError(
-    answers: pd.DataFrame,
-    predictions: pd.DataFrame
-) -> Tuple[Dict[str, float], float]:
-    """
-    For each column in `predictions`:
-      rmse     = sqrt(mean((answers[col] - predictions[col])**2))
-      cv_rmse  = rmse / mean(answers[col])
-      score    = 100 * (1/2) ** cv_rmse
-
-    Returns:
-      column_scores: { col_name: score }
-      total_score:     sum of column_scores (max = n_cols * 100)
-    """
-    column_scores: Dict[str, float] = {}
-    for col in predictions.columns:
-        # 1) RMSE
-        # mse  = ((answers[col] - predictions[col]) ** 2).mean()
-        # rmse = np.sqrt(mse)
-        error = (answers[col] - predictions[col]).abs().sum()
-
-        # 2) normalize by mean
-        # meanv = answers[col].mean()
-        # if meanv != 0:
-        #     x = rmse / meanv
-        # else:
-        #     # if true values are flat zero, perfect => x=0, else infinite
-        #     x = 0.0 if rmse == 0 else np.inf
-
-        # 3) exponential decay score
-        # score_col = 100.0 * (1/10) ** (100.0 * x)
-        score_col = error
-
-        column_scores[col] = round(score_col, 4)
-
-    total_score = round(sum(column_scores.values()), 4)
-    return column_scores, total_score
-
-
-def editScore(score, user_id):
-    update_score = {"score": score}
-    response = (
-        supabase
-        .table("Users")
-        .update(update_score)
-        .eq("id", user_id)
-        .gt("score", score)   # only update if new score is smaller
-        .execute()
-    )
-    return len(response.data) > 0  # True if DB was updated
-
 
 @app.post("/verifyAnswers")
 async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
@@ -127,42 +74,7 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
     contents    = await file.read()
     predictions = pd.read_csv(StringIO(contents.decode('utf-8')))
 
-    # 3) Load answer key
-    resp    = supabase.table("StockChallenge").select("*").execute()
-    answers = pd.DataFrame(resp.data)
-
-    # 4) Drop date column from both (if present)
-    predictions = predictions.drop(columns=["date"], errors="ignore")
-    answers     = answers.drop(columns=["date"],     errors="ignore")
-
-    # 5) Enforce 30 rows
-    if len(predictions) != len(answers):
-        return {"error": f"Your file must have exactly {len(answers)} rows"}
-
-    # 6) Filter to valid tickers only
-    valid_tickers      = set(answers.columns)
-    user_tickers       = set(predictions.columns)
-    valid_user_tickers = list(user_tickers & valid_tickers)
-
-    if not valid_user_tickers:
-        return {"error": "No valid tickers found in your upload"}
-
-    predictions = predictions[valid_user_tickers]
-    answers_sub = answers[valid_user_tickers]
-
-    # 7) Compute per-column scores and total score
-    col_scores, total_score = computeError(answers_sub, predictions)
-
-    # 8) Update user score if improved
-    updated = editScore(total_score, db_user["id"])
-
-    return {
-        "message": (
-            f"{'Score updated!' if updated else 'Score not improved; '} "
-            f"Total Error: {total_score}"
-        ),
-        "perColumnScores": col_scores
-    }
+    return verifyAnswersForElapsedSeconds(predictions, supabase, db_user)
 
 
 @app.get("/placements")
