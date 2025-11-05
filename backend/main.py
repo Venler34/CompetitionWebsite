@@ -61,6 +61,7 @@ def authenticate_user(user: UserAuth):
 
 @app.post("/verifyAnswers")
 async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
+    print("Hit here")
     # 1) Authenticate
     user = UserAuth(**json.loads(data))
     db_user, valid_user = authenticate_user(user)
@@ -72,6 +73,9 @@ async def verifyAnswers(data: str = Form(...), file: UploadFile = File(...)):
         return {"error": "The uploaded file must be a CSV"}
     contents    = await file.read()
     predictions = pd.read_csv(StringIO(contents.decode('utf-8')))
+
+    print("Print Predictions")
+    print(predictions)
 
     return verifyAnswersForElapsedSeconds(predictions, supabase, db_user)
 

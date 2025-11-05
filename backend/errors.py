@@ -6,6 +6,7 @@ class ElapsedTimeStrategy():
     # Score is represented as elapsed time
     @staticmethod
     def editScore(score, user_id, supabase):
+        print("Updating score", score, user_id)
         update_score = {"score": score}
         response = (
             supabase

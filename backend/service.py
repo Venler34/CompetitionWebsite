@@ -6,7 +6,9 @@ from errors import *
 
 def verifyAnswersForElapsedSeconds(predictions, supabase, db_user):
     # 8) Update user score if improved
+    print("Verify Answers")
     updated = ElapsedTimeStrategy.editScore(predictions.iloc[0, 1], db_user["id"], supabase)
+    print("Error Answers")
 
     return {
         "message": (
