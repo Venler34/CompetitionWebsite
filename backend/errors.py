@@ -13,7 +13,7 @@ class ElapsedTimeStrategy():
             .table("Users")
             .update(update_score)
             .eq("id", user_id)
-            .gt("elapsed_seconds", score)   # only update if new score is smaller
+            .gt("score", score)   # only update if new score is smaller
             .execute()
         )
         return len(response.data) > 0  # True if DB was updated
